@@ -1,0 +1,791 @@
+---
+title: "Lista nº 1 – Geração de Números Aleatórios"
+subtitle: "EST066 2022.1 - Estatística Computacional 2"
+author: |
+  | Pedro Henrique Corrêa de Almeida
+  | UFJF
+  | Matrícula : 202065075AD
+date: "01/06/2022"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+    theme: flatly
+---
+
+
+
+# Definindo semente aleatória
+
+Uma vez que vamos realizar geração de números aleatórios, vamos definir uma semente a fim de garantir replicabilidade dos resultados obtidos.
+
+```{r}
+set.seed(741896)
+```
+
+# Questão 1
+
+```{r}
+202065075 %% 3
+```
+Como mat (mod 3) é igual a 0, vamos obter a quantilica da distribuição $Weibull$ a fim de construir um gerador de números aleatórios da mesma, para isso vamos considerar a $F(x)$ da $Weibull$ como:
+
+$$F(x) = 1 - e^{(x/\lambda)^k}$$
+
+Onde $\lambda$ é o parâmetro de escala., e $k$ o parâmetro de forma
+
+Uma vez que a função quantilíca é a inversa da função de distribuição $F(x)$, temos a seguinte relação, onde $p$ é a $P(X <= x)$:
+
+$$F(F^{-1}(p)) = p$$
+
+Dessa forma, aplicando $F^{-1}(p)$ em $F(x)$, temos:
+
+$$1 - e^{-(F^{-1}(p)/\lambda)^k} = p$$
+Manipulando a equação temos:
+
+$$e^{-(F^{-1}(p)/\lambda)^k} = 1 - p$$
+Aplicando $log$ em ambos os lados da igualdade, temos:
+
+$$log(e^{-(F^{-1}(p)/\lambda)^k}) = log(1 - p)$$
+Uma vez que, $log(e^{x}) = x$, temos:
+
+$$-(F^{-1}(p)/\lambda)^k = log(1 - p)$$
+
+Com isso, concluímos:
+
+$$F^{-1}(p) = \lambda((-log(1 - p))^{1/k})$$
+Uma vez que sabemos a função explícita da quantílica da distribuição $Weibull$ vamos implementar essa função.
+
+```{r}
+ # Definindo a função quantilíca obtida
+quantilica_weibull <- function(p, forma = 1, escala = 1){
+  escala*((-log(1-p))**(1/forma))
+}
+```
+
+Agora vamos definir um gerador da distribuição $Weibull$ a partir da função quantílica.
+
+```{r}
+ # Definindo o gerador da weibull
+gerador_weibull <- function(forma, escala, N = 1E4){
+  U <- runif(N)
+  quantilica_weibull(U, forma = forma, escala = escala)
+}
+```
+
+```{r}
+ # Gerando uma Weibull(1,1)
+x_weibull <- gerador_weibull(1, 1)
+ # Plotando o histograma
+hist(x_weibull, freq = F, main = "Histograma - Weibull(1, 1)", xlab = "x", ylab = "densidade")
+ # Plotando a curva da densidade
+curve(dweibull(x, 1, 1), add = T, col = "blue")
+ # Plotando a legenda
+legend("topright", legend = "f(x) - Weibull(1, 1)", bty = "n", col = "blue", lty = 1)
+```
+
+```{r}
+ # Gerando uma Weibull(5,3)
+x_weibull_2 <- gerador_weibull(5,3)
+
+hist(x_weibull_2, freq = F, main = "Histograma - Weibull(5, 3)", xlab = "x", ylab = "densidade")
+curve(dweibull(x, 5, 3), add = T, col = "blue")
+ # Plotando a legenda
+legend("topright", legend = "f(x) - Weibull(5, 3)", bty = "n", col = "blue", lty = 1)
+```
+
+# Questão 2 
+
+A fim de gerar números aleatórios dessa variável aleatória, vamos utilizar o método da inversa. Para isso vamos considerar:
+
+$$F_X(F_X^{-1}(p)) = p$$
+Loo:
+
+$$F_X(F_X^{-1}(p)) - p = 0$$
+
+Ou seja, queremos o valor de x em $F_X(x)$ que menos o valor de p dê igual a zero. Porém a fim de realizar esse cálculo numericamente vamos considerar: 
+
+
+$$(F_X(F_X^{-1}(p)) - p)^2 = 0$$
+
+Dessa forma, vamos utilizar a função `optimize` a fim de encontrar a raiz dessa equação. Além disso, vamos considerar que $0 <= x <= 1$. E, a fim de criar uma função vetorizada vamos utilizar a função `lapply`, e, posteriormente `unlist` para retornar tudo em um vetor:
+
+```{r}
+ # Definindo a quantilica
+quantilica_2 <- function(p, erro = 1E-6){
+   # Definindo Fx
+  Fx <- function(x) ((x**2 + x)/2)
+   # Calculando a quantilica pela optmize
+  unlist(
+    lapply(p,
+      function(pi)
+         optimize(
+            function(x) (Fx(x) - pi)**2, 
+            interval = c(0, 1), tol = erro)$minimum))
+}
+```
+
+Dessa forma, vamos gerar uma $U(0,1)$ e aplicar na função quantílica a fim de criar um gerador da variável aletória com esta função de distribuição
+
+```{r}
+gerador_questao_2 <- function(N = 1E4){
+   # Gerando Uniforme
+  U <- runif(N)
+   # gerando os valores pela inversa
+  quantilica_2(U)
+}
+```
+
+Dessa forma, vamos realizar os testes graficamente, a fim de visualizar a curva de densidade, vamos derivar $F_X(x)$:
+
+$$f_X(x) = \frac{dF_X(x)}{dx}$$
+$$f_X(x) = \frac{d[\frac{x^2 + x}{2})]}{dx}$$
+
+Derivando, temos:
+
+$$f_X(x) = \frac{2x+1}{2}$$
+
+```{r}
+fx_2 <- function(x) ((2*x)+1)/2
+
+x_2 <- gerador_questao_2()
+hist(x_2, freq = F, main = "Histograma dos valores gerados", 
+     xlab = "x", ylab = "densidade")
+curve(fx_2(x), from = 0, to = 1, col = "blue", add = T)
+
+legend("topleft", legend = "fX(x)", col = "blue", lty = 1, bty = "n")
+```
+
+Logo, conseguimos ver que o gerador está gerando de acordo com a densidade de X.
+
+# Questão 3
+
+Uma vez que a função de densidade da variável aleatória é:
+
+$$f_X(x) = e^{-2|x|}$$
+
+Temos uma semelhança com a densidade de uma exponencial com $\lambda = 2$:
+
+$$f_Y(y) = 2e^{-2y},\ y>=0$$
+
+Com a diferença que a exponencial aceita apenas valores de $y>=0$, e a densidade é multiplicada por dois. No entanto, analisando a $f_X(x)$ percebemos que é uma densidade simétrica onde:
+
+$$f_X(a) = f_X(-a),\ para\ qualquer\ a\ uma\ vez\ que\ abs(a)\ = abs(-a)$$, 
+
+Além disso, temos:
+
+$$f_Y(y) = f_X(a) + f_X(-a)$$
+
+Vamos verficar essa relação graficamente.
+```{r}
+fx_3 <- function(x) exp(-2*abs(x))
+```
+
+```{r}
+curve(fx_3(x), from = -5, to = 5)
+curve(dexp(x, 2)/2, add = T, col = "blue", from = 0, to = 5, lty = 2)
+legend("topleft", legend = "f(y)/2", "f(x)", bty = "n", col = c("blue", "black"), lty = c(2, 1))
+```
+
+Pelo gráfico, vemos que $f_X(x)$ para $x>=0$ é igual a densidade de $Exp(2)$ dividida por dois, e como $f_X(x)$ é simétrica temos que tal relação também vale para $x<0$.
+
+Ou seja, podemos tentar utilizar a distribuição $Exp(2)$ para gerar os valores e dividir os sinais desses valores entre positvos e negativos a partir de uma $U(0,1)$, onde garantimos que metade dos valores serão menores que 0, e a outra metade maior que 0, para isso os valores da $Uniforme$ menores que 0,5 serão as posições onde os valores de x serão negativos, caso contrário os valores de x serão positivos. Para realizar esse teste vamos gerar para valores de $N = (100, 500, 1000, 10000)$
+
+```{r}
+ # Definindo os valores de n
+N <- c(1E2, 5E2, 1E3, 1E4)
+ # Gerando as Uniformes para decidir o sinal
+U_sinal <- lapply(N, runif)
+ # Gerando as exponenciais dependendo de n
+exp <- lapply(N, function(n) rexp(n, 2))
+ # calculando as amostras a partie das exponencias e uniformes
+x_3 <- lapply(1:length(N), function(i) ifelse(U_sinal[[i]] < 0.5, -exp[[i]], exp[[i]]))
+```
+
+```{r}
+ # Definindo a matriz de gráficos 2x2
+par(mfrow = c(2, 2))
+
+ # Plotando um gráfico para cada valor de n
+invisible(
+  lapply(1:length(N), function(i){
+     # Plotando a densidade
+    curve(fx_3(x), from = -5, to = 5, main = sprintf("Histograma com n = %s", N[i]), col = "blue", bty = "n")
+     # Plotando o histograma
+    hist(x_3[[i]], freq = F, breaks = sqrt(N[i]), add = T)
+     # Plotando a legenda
+    legend("topleft", legend = "f(x)", col = "blue", lty = 1, bty = "n")
+    }
+  )
+)
+```
+
+Podemos perceber, a partir dos gráficos, que o histograma das amostras, conforme $n$ aumenta, se aproxima cada vez mais da densidade dada pela função $F_X(x)$.
+
+
+# Questão 4
+
+Para gerar valores aleatórios a partir do método aceitação/rejeição, vamos definir a função `rejeicao`, que calcula o valor de `M` a partir da função `optimize` aplicada na razão $\frac{f_X(x)}{g_Y(y)}$:
+
+```{r}
+rejeicao <- function(fx, gy, gerador_y, N = 1E4, ...){
+  
+  # Parâmetros: fx        - função densidade da distribuição de interesse
+  #             gy        - função densidade da distribuição candidata
+  #             gerador_y - função geradora de valores da candidata
+  #             N         - quantidade de valores, padrão - 10E4
+  #             ...       - parâmetros do gerador_y
+  
+  # Retorno:  Lista - $x             - valores aceitos 
+  #                   $y             - y correspondente dos valores aceitos 
+  #                   $rate          - proporção
+  #                   $iteracoes     - número de iterações
+  #                   $x_nao_aceitos - valores não aceitos
+  #                   $y_nao_aceitos - y correspondente dos valores não aceitos 
+  
+   # Calculando M
+  M <- optimize(f = function(x) fx(x)/gy(x), 
+                interval = c(0, 1), maximum = T)$objective
+
+   # Iniciando valores faltantes
+  faltantes <- N
+   # Iniciando vetor x dos aceitos
+  x <- c()
+   # Iniciando vetor x dos não aceitos
+  x_nao_aceito <- c()
+   # Iniciando vetor y dos aceitos
+  y <- c()
+   # Iniciando vetor y dos não aceitos
+  y_nao_aceito <- c()
+   # Guardando os valores gerados em uma variável
+  gerados <- 0
+  
+  while(faltantes > 0){
+     # Calculando o número de gerados
+    gerados <- gerados + faltantes
+    
+     # Gerando Y
+    Y <- gerador_y(faltantes, ...)
+     # Gerando U
+    U <- runif(faltantes)
+    
+     # Verificando os valores aceitos
+    x_i <- ifelse(U <= fx(Y)/(M*gy(Y)), Y, NA)
+     # verificando as posições não aceitas
+    na_i <- is.na(x_i)
+     # salvando os valores aceitos
+    x_i_aceito <- x_i[!na_i]
+     # calculando y dos valores aceitos
+    y_i_aceito <- (U*M*gy(Y))[!na_i]
+     # salvando os valores não aceitos
+    x_i_nao_aceito <- Y[na_i]
+     # calculando y dos valores não aceitos
+    y_i_nao_aceito <- (U*M*gy(Y))[na_i]
+    
+     # Calculando faltantes
+    faltantes <- sum(na_i)
+     # juntando pares ordenados dos aceitos
+    x <- c(x, x_i_aceito)
+    y <- c(y, y_i_aceito)
+     # juntando pares ordenados dos não aceitos
+    x_nao_aceito <- c(x_nao_aceito, x_i_nao_aceito)
+    y_nao_aceito <- c(y_nao_aceito, y_i_nao_aceito)
+  }
+   # Retornando uma lista com os resultados
+  return(list(x = x, y = y, rate = N/gerados, iteracoes = gerados,
+              x_nao_aceitos = x_nao_aceito, y_nao_aceitos = y_nao_aceito))
+}
+```
+
+Além disso, vamos definir uma função para plotar um gráfico desses valores aceitos e não aceitos:
+
+```{r}
+plot_aceitos <- function(x, fx, cor_aceito = "blue", cor_nao_aceito = "red", ...){
+  
+  # Parâmetros: x              - lista gerada com valores aceitos e não aceitos
+  #             fx             - função densidade da distribuição de interesse
+  #             cor_aceito     - cor dos pontos aceitos, padrão - "blue"
+  #             cor_nao_aceito - cor dos pontos não aceitos, padrão - "red"
+  #             ...            - parâmetros para função plot
+  
+  # Retorno:  Gráfico
+  
+  
+  
+   # Plotando aceitos
+  plot(x$x, x$y, col = cor_aceito, bty = "L", xlab = "x", ylab = "densidade", ...)
+   # Plotando não aceitos
+  points(x$x_nao_aceitos, x$y_nao_aceitos, col = cor_nao_aceito)
+   # Plotando curva de densidade
+  curve(fx, col = cor_aceito, add = T)
+   # Plotando proporção
+  mtext(sprintf("Proporção de aceitos: %.02f%%", x$rate*100),
+        line = 1, adj = 0)
+}
+```
+
+Com isso, vamos considerar $f_X(x) = 30(x^2 - 2x^3 + x^4)$:
+
+```{r}
+fx_4 <- function(x) 30*((x**2) - (2*(x**3)) + (x**4))
+curve(fx_4(x), from = 0, to = 1, col = "blue", 
+      main = "Curva de densidade", xlab = "x", ylab = "densidade")
+```
+
+Dessa forma vamos aplicar a função utilizando a candidata como uma uniforme e vamos observar o resultado:
+
+```{r}
+gy_4 <- dunif
+x_4 <- rejeicao(fx_4, gy_4, runif)
+plot_aceitos(x_4, fx_4)
+```
+
+Pela Uniforme, tivemos que $53,23$% dos pontos foram aceitos. Vamos tentar utilizar uma $Beta$ a fim de tentar melhorar essa proporção, primeiramente vamos utilizar uma $Beta(2,2)$:
+
+```{r}
+gy_4_beta_2 <- function(x) dbeta(x, 2, 2)
+x_4_beta_2 <- rejeicao(fx_4, gy_4_beta_2, rbeta, shape1 = 2, shape2 = 2)
+plot_aceitos(x_4_beta_2, fx_4)
+```
+
+A proporção dos aceitos subiu para $80,05$%, vamos tentar uma $Beta(3, 3)$ a fim de melhorar ainda mais a proporção:
+
+```{r}
+gy_4_beta_3 <- function(x) dbeta(x, 3, 3)
+x_4_beta_3 <- rejeicao(fx_4, gy_4_beta_3, rbeta, shape1 = 3, shape2 = 3)
+plot_aceitos(x_4_beta_3, fx_4)
+```
+
+utilizando a $Beta(3, 3)$ vemos que $100$% dos pontos foram aceitos, ou seja, essa distribuicão segue uma $Beta(3, 3)$.
+
+# Questão 5
+
+Considerando $U$ ~ $Unif(0,1)$, e $X = ln(\frac{U}{1-U})$, podemos definir a função de distribuição de $X$ como:
+
+$$F_X(x) = P(X <= x)$$
+
+Como $X = ln(\frac{U}{1-U})$, temos:
+
+$$F_X(x) = P(ln(\frac{U}{1-U}) <= x)$$
+Aplicando a função exponencial em ambos os lados da igualdade, temos:
+
+$$F_X(x) = P(e^{ln(\frac{U}{1-U})} <= e^x)$$
+Como $e^{ln(x)} = x$, temos:
+
+$$F_X(x) = P(\frac{U}{1-U} <= e^x)$$
+
+Elevando ambos os lados em $-1$, mudando o sinal da inequação:
+
+$$F_X(x) = P(\frac{1-U}{U} >= e^{-x})$$
+
+Separando a fração $\frac{1-U}{U}$ em dois elementos:
+
+$$F_X(x) = P(\frac{1}{U} - \frac{U}{U} >= e^{-x})$$
+
+Como consideramos $U$ apenas uma variável aletória, temos que $\frac{U}{U}=1$, logo:
+
+$$F_X(x) = P(\frac{1}{U} - 1 >= e^{-x})$$
+
+Ou seja, somando 1 aos dois lados da inequação:
+
+$$F_X(x) = P(\frac{1}{U} >= 1 + e^{-x})$$
+
+Mais uma vez, elevando ambos os lados em $-1$, mudando o sinal da inequação:
+
+$$F_X(x) = P(U <= [{1 + e^{-x}}]^{-1})$$
+
+Pela definição da função de distribuição:
+
+$$F_X(x) = F_U([{1 + e^{-x}}]^{-1})$$
+
+Como $U$ ~ $Unif(0,1)$, $F_U(u) = u$, logo:
+
+$$F_x(x) = [{1 + e^{-x}}]^{-1}$$
+
+Notamos que $F_x(x)$ é equivalente a função de distribuição $Logística(0,1)$, ou seja, $X$ ~ $Logística(0,1)$.
+
+Vamos observar tal relação graficamente:
+
+```{r}
+ # Gerando U(0,1)
+U <- runif(1E4)
+ # Aplicando a transformação
+x_5 <- log(U/(1-U))
+  # Plotando o histograma
+hist(x_5, freq = F, main = "Logística(0, 1)", xlab = "x", ylab = "densidade")
+ # Plotando a curva da densidade
+curve(dlogis(x, 0, 1), add = T, col = "blue")
+ # Plotando a legenda
+legend("topleft", legend = "Logística(0,1)", bty = "n", col = "blue", lty = 1)
+```
+
+Agora, vamos encontrar a relação de $U$ com a distribuição $Logística(\mu,\beta)$. Para isso vamos considerar $Y$ ~ $Logística(\mu,\beta)$, sabemos que:
+
+$$F_Y(y) =[{1 + e^{-\frac{(y-\mu)}{\beta}}}]^{-1}$$
+
+Além disso, considerando $F_U(u) = u$, podemos estabeler a seguinte igualdade:
+
+$$F_U([{1 + e^{-\frac{(y-\mu)}{\beta}}}]^{-1}) = [{1 + e^{-\frac{(y-\mu)}{\beta}}}]^{-1}$$
+
+Logo:
+
+$$F_Y(y) = F_U([{1 + e^{-\frac{(y-\mu)}{\beta}}}]^{-1})$$
+
+Pela definição de $F_U(u) = P(U <= u)$, temos:
+
+$$F_Y(y) = P(U <= [{1 + e^{-\frac{(y-\mu)}{\beta}}}]^{-1})$$
+
+Elevando ambos os lados em $-1$, mudando o sinal da inequação:
+
+$$F_Y(y) = P(\frac{1}{U} >= {1 + e^{-\frac{(y-\mu)}{\beta}}})$$
+
+Subtraindo 1 em ambos os lados da inequação:
+
+$$F_Y(y) = P(\frac{1}{U} - 1 >= e^{-\frac{(y-\mu)}{\beta}})$$
+
+Resolvendo $\frac{1}{U} - 1$:
+
+$$F_Y(y) = P(\frac{1}{U} - \frac{U}{U} >= e^{-\frac{(y-\mu)}{\beta}})$$
+
+Ou seja:
+
+$$F_Y(y) = P(\frac{1-U}{U} >= e^{-\frac{(y-\mu)}{\beta}})$$
+
+Elevando ambos os lados em $-1$, mudando o sinal da inequação:
+
+$$F_Y(y) = P(\frac{U}{1-U} <= e^{\frac{(y-\mu)}{\beta}})$$
+
+Aplicando a função $ln$ em ambos os lados:
+
+$$F_Y(y) = P(ln(\frac{U}{1-U}) <= ln(e^{\frac{(y-\mu)}{\beta}}))$$
+
+Como $ln(e^x) = x$, temos:
+
+$$F_Y(y) = P(ln(\frac{U}{1-U}) <= \frac{(y-\mu)}{\beta})$$
+
+Multiplicando ambos os lados por $\beta$, e, posteriormente, somando $\mu$, temos:
+
+$$F_Y(y) = P(\beta*ln(\frac{U}{1-U}) + \mu <= y)$$
+
+ou seja, como:
+
+$$F_Y(Y) = P(Y <= y)$$
+
+Concluímos:
+
+$$Y = \beta*ln(\frac{U}{1-U}) + \mu$$
+
+Onde, $Y$ ~ $Logística(\mu,\beta)$
+
+A fim de visualizar graficamente esses resultados vamos gerar uma amostra a partir dessa transformação e observar:
+
+```{r}
+ # Definindo a função para gerar uma Logistica(mu, beta)
+gera_logistica <- function(N, mu = 0, beta = 1){
+  U <- runif(N)
+  (beta*log(U/(1-U)))+mu
+}
+```
+
+```{r}
+ # Definindo valor de mu
+mu <- 5
+ # Definindo valor de beta
+beta <- 2
+ # Gerando a amostra 
+x_log_5_2 <- gera_logistica(1E4, mu, beta)
+ # Plotando o histograma
+hist(x_log_5_2, freq = F, main = "Logística(5, 2)", xlab = "x", ylab = "densidade")
+ # Plotando a curva da densidade
+curve(dlogis(x, mu, beta), add = T, col = "blue")
+ # Plotando a legenda
+legend("topleft", legend = "Logística(5,2)", bty = "n", col = "blue", lty = 1)
+```
+
+Dessa forma, conseguimos ver essa relação empiricamente onde a curva da densidade da $Logística$ se adequa ao histograma dos valores gerados.
+
+# Questão 6 
+
+A fim de analisar tal algoritmo, vamos implementá-lo:
+
+```{r}
+gera_U_alpha <- function(alpha, N){
+  # alpha - parâmetro da beta
+  # N - tamanho da amostra
+  
+   # Iniciando o vetor x
+  x <- c()
+   # verificar se alpha não estiver entre 0 e 1
+  stopifnot(alpha < 1 & alpha > 0)
+   # calculando o valor de valores faltantes
+  faltantes <- N
+  
+   # gerando um loop enquanto existir valores faltantes
+  while(faltantes > 0){
+     # Gerando U(0,1)
+    U <- runif(faltantes)
+     # Filtrando U <= alpha
+    x_i <- ifelse(U <= alpha, U, NA)
+     # definindo as posições que retornaram NA
+    na_i <- is.na(x_i)
+     # calculando o valor de valores faltantes
+    faltantes <- sum(na_i)
+     # concatenando os valores aceitos
+    x <- c(x, x_i[!na_i])
+  }
+  
+   # Retornando x
+  x
+}
+```
+
+Vamos observar um exemplo quando $\alpha = 0.9$:
+
+```{r}
+par(mfrow = c(2, 1))
+ # Definindo alpha
+alpha <- 0.9
+ # Definindo tamanho da amostra
+N <- 1E4
+ # Gerando a amostra pelo algoritmo
+x_6_alpha_0.9 <- gera_U_alpha(alpha, N)
+ # Gerando o histograma
+hist(x_6_alpha_0.9, freq = F, main = "Uniforme(0, alpha) - algoritmo", xlab = "x", ylab = "densidade")
+
+ # Gerando a uniforme
+U <- runif(N)
+ # gerando o histograma
+hist(alpha*U, freq = F, main = "alpha*Uniforme(0, 1)", xlab = "x", ylab = "densidade")
+```
+
+Agora para compara ambos os metodos vamos utilizar o pacote `microbenchmark` a fim de verificar os tempos de execução:
+
+```{r}
+library(microbenchmark)
+```
+
+Primeiro utilizando $alpha=0.7$ e $N=10^4$:
+
+```{r}
+microbenchmark(gera_U_alpha(0.7, 1E4), 
+               0.9*runif(1E4))
+```
+
+Utilizando $alpha=0.8$ e $N=10^4$:
+
+```{r}
+microbenchmark(gera_U_alpha(0.8, 1E4), 
+               0.8*runif(1E4))
+```
+
+Utilizando $alpha=0.9$ e $N=10^4$:
+
+```{r}
+microbenchmark(gera_U_alpha(0.9, 1E4), 
+               0.9*runif(1E4))
+```
+
+Utilizando $alpha=0.99$ e $N=10^4$:
+
+```{r}
+microbenchmark(gera_U_alpha(0.99, 1E4), 
+               0.99*runif(1E4))
+```
+
+utilizando $alpha=0.999$ e $N=10^4$:
+
+```{r}
+microbenchmark(gera_U_alpha(0.999, 1E4), 
+               0.999*runif(1E4))
+```
+
+Logo podemos concluir, que o método de $\alpha*U$ é mais eficiente, no entanto, quanto mais próximo de 1 é o valor de $\alpha$ menor o tempo de execução do algoritmo.
+
+# Questão 7
+
+## Letra a
+
+A fim de gerar uma $Beta(\alpha, \beta)$ a partir de uma uniforme vamos utilizar a função `rejeicao` defininda anteriormente, além disso, vamos testar a geração de uma $beta(2.7,6.3)$:
+
+```{r}
+fx_7 <- function(x) dbeta(x, shape1 = 2.7, shape2 = 6.3)
+x_7_a <- rejeicao(fx_7, dunif, runif)
+plot_aceitos(x_7_a, fx_7)
+```
+
+Vemos que utilizando uma uniforme como candidata tivemos $36,96$% de aceitos.
+
+## Letra b
+
+Utilizando o exemplo 2.2, vamos gerar uma $Beta(2.7, 6.3)$ a partir de uma $Beta(2,6)$, além disso, vamos gerar esse $Beta(2,6)$ a partir de exponencias de acordo com a seguinte relação, dado que $X_j$ ~ $Exp(1)$, seja Y:
+
+$$Y = \frac{\sum^{a}_{j=1}X_j}{\sum^{a+b}_{j=1}X_j}$$
+
+Temos que $Y$ ~ $Beta(a, b)$, logo vamos implementar esse algoritmo:
+
+```{r}
+gera_beta_exp <- function(N, alpha, beta){
+  
+  #Parâmetros: N     - número de valores
+  #            alpha - parâmetro da beta
+  #            beta  - parâmetro da beta
+  
+  
+   # aplicando lapply para garantir que seja vetorizado
+  unlist(lapply(1:N, function(i){
+     # gerando a exponencial
+    xj <- rexp(alpha+beta)
+     # gerando a beta(a,b)
+    sum(xj[1:alpha])/sum(xj)
+  }
+ )
+)
+}
+
+```
+
+
+Dessa forma, vamos gerar a $Beta(2.7, 6.3)$ utilizando uma $Beta(2,6)$ como candidata, gerada pela função `gera_beta_exp`.
+
+```{r}
+gy_7 <- function(x) dbeta(x, shape1 = 2, shape2 = 6)
+x_7_b <- rejeicao(fx_7, gy_7, gera_beta_exp, alpha = 2, beta = 6)
+plot_aceitos(x_7_b, fx_7, ylim = c(0,5))
+```
+
+
+Vemos, que utilizando um $Beta(2,6)$ houve uma grande melhora em relação utilizar uma uniforme, onde a proporção subiu para $61$%.
+
+## Letra c
+
+A fim de gerar os valores de uma normal truncada vamos utilizar a função `rtnorm` do pacote `TruncatedNormal`. Com isso, vamos definir os limites como 0 e 1, uma vez que queremos gerar uma beta, logo assume valores entre 0 e 1.
+
+```{r}
+library(TruncatedNormal)
+```
+
+Para isso, como a normal depende da media e variância, vamos construir uma função para variar esses parâmetros e analisar qual a melhor opção a fim de gerar uma $Beta(2.7,6.3)$. 
+
+```{r}
+gera_beta_7_c <- function(mean, sd, N = 1E4, alpha = 2.7, beta = 6.3){
+   rejeicao(function(x) dbeta(x, alpha, beta), 
+            function(x) dnorm(x, mean, sd), 
+            function(n) rtnorm(n = n, mu = mean, sd = sd, lb = 0, ub = 1),
+            N = N)
+}
+```
+
+Utilizando $N(0.5, 1)$:
+
+```{r}
+x_beta_7_c_1 <- gera_beta_7_c(0.5, 1)
+plot_aceitos(x_beta_7_c_1, fx_7)
+```
+
+Acredito que para melhorar podemos diminuir a média, uma vez que existe uma assimetria à direita, e além disso diminuir a variância a fim de concentrar mais os valores, utilizando uma $N(0.25,0.2)$:
+
+```{r}
+x_beta_7_c_1 <- gera_beta_7_c(0.25, 0.2)
+plot_aceitos(x_beta_7_c_1, fx_7)
+```
+
+Dessa vez, com uma $N(0.25,0.2)$ truncada entre 0 e 1, vemops que a proporção de aceitos melhorou muito, acima dos $80$%.
+
+# Questão 8
+
+## Letra a
+
+Vamos implemetar uma função a fim de construir um gerador congruencial: 
+
+```{r}
+gerador_congruencial <- function(x0, N, a = 17, m = (2**13) - 1, c = 0){
+  # Parâmetros: 
+  #            x0- valor inical
+  #            N - número de valores
+  #            a - multiplicador
+  #            c - incremento
+  #            m -modulo
+  x <- x0
+  for(i in 1:N){
+    x[i+1] <- (a*x[i] + c) %% m
+  }
+  x[2:(N+1)]
+}
+```
+
+## Letra b
+
+Gerando 500 valores com $a = 17$, $m=2^{13} - 1$ e $c=0$, utilizando $x_0=3$
+```{r}
+x_8 <- gerador_congruencial(x0 = 3, N = 500)
+```
+
+## Letra c
+
+```{r}
+cor(x_8[1:499], x_8[2:500])
+```
+
+Calculando a correlação de $x_i$ com $x_{i+1}$ vemos que existe uma correlação baixa de, aproximadamente, 8%.
+
+## Letra d
+
+```{r}
+plot(x_8[1:499], x_8[2:500], xlab = "xi", ylab = "xi+1")
+```
+
+A partir do gráfico, vemos que os pontos estão situados em 17 linhas, ou seja, mesmo valor do multiplicador $a$.
+
+## Letra e
+
+Modificando $a=85$ dessa vez:
+
+```{r}
+x_8_e <- gerador_congruencial(x0 = 3, N = 500, a = 85)
+cor(x_8_e[1:499], x_8_e[2:500])
+```
+
+Podemos ver que a correlação de $x_i$ com $x_{i+1}$ diminuiu bastante quando $a$ aumentou, dessa vez foi aproximadamente 1%.
+
+```{r}
+plot(x_8_e[1:499], x_8_e[2:500], xlab = "xi", ylab = "xi+1")
+```
+
+Pelo gráfico não conseguimos mais ver o padrão visto quando $a$ era 17, dessa vez os pontos estão masi distribídos.
+
+## Letra f
+
+Considerando $a=17$, temos:
+
+```{r}
+cor(x_8[1:498], x_8[3:500])
+```
+
+Observando a correlação de $x_i$ com $x_{i+2}$ vemos que existe uma correlação negativa, porém muito pequena.
+
+```{r}
+plot(x_8[1:498], x_8[3:500], xlab = "xi", ylab = "xi+2")
+```
+
+
+Nota-se, pelo gráfico, que não existe mais um padrão da relação dos pontos entre $x_i$ com $x_{i+2}$ como era visto entre $x_i$ com $x_{i+1}$.
+
+Agora, considerando $a=85$:
+
+```{r}
+cor(x_8_e[1:498], x_8_e[3:500])
+```
+
+Observando a correlação de $x_i$ com $x_{i+2}$ vemos que existe uma correlação negativa, porém pequena, no entanto essa correlação foi mais forte que $a=17$.
+
+```{r}
+plot(x_8_e[1:498], x_8_e[3:500], xlab = "xi", ylab = "xi+2")
+```
+
+Observando o gráfico, aparenta que os pontos não estão distribídos de forma totalmente aletória, parece haver uma relação negativa, porém pequena.
+
+# Letra g
+
+Concluímos, que para um valor de $a$ pequeno os valores gerados apresentam certa correlação, principalmente entre o valor posterior, indicando que não é a melhor forma de gerar valores aleatórios, uma vez que o valor $x_{i+1}$ está correlacionado com o valor de $x_i$, no entanto, esse problema pode ser minimizado com um valor maior de $a$. 

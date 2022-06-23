@@ -1,0 +1,1423 @@
+---
+title: "Lista nº 2– Geração de Números Aleatórios"
+subtitle: "EST066 2022.1 - Estatística Computacional 2"
+author: |
+  | Pedro Henrique Corrêa de Almeida
+  | UFJF
+  | Matrícula : 202065075AD
+date: "17/06/2022"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+    theme: flatly
+---
+
+
+# Definindo semente aleatória
+
+Uma vez que vamos realizar geração de números aleatórios, vamos definir uma semente a fim de garantir replicabilidade dos resultados obtidos.
+
+```{r}
+set.seed(984365)
+```
+
+# Questão 1
+
+## Letra a
+
+considerando $U_1$ e $U_2$ seguindo uma $U(0,1)$ independentes, vamos definir:
+
+$$R = \sqrt{-2log(U_1)}$$
+
+Pela função de distribuição de R, temos:
+
+$$F_R(r) = P(R <= r)$$
+
+Ou seja:
+
+$$F_R(r) = P[\sqrt{-2log(U_1)} <= r]$$
+
+Elevando ambos os lados da inequação ao quadrado:
+
+$$F_R(r) = P[-2log(U_1) <= r^2]$$
+
+Divididindo ambos os lados o $-2$, e, consequentemente invertendo o sinal da inequação:
+
+$$F_R(r) = P[log(U_1) > \frac{-r^2}{2}]$$
+
+Aplicando $exp(.)$ em ambos os lados:
+
+$$F_R(r) = P(U_1 > e^{\frac{-r^2}{2}})$$
+
+Dessa forma:
+
+$$F_R(r) = 1-P(U_1 <= e^{\frac{-r^2}{2}})$$
+
+Como, $U_1$ ~ $U(0,1)$, pela sua função de distribuição, sabemos que $P(U_1<=u) = u$, logo, considerando $u= e^{\frac{-r^2}{2}}$, temos:
+
+$$F_R(r) = 1-F_{U_1}(e^{\frac{-r^2}{2}})$$
+
+$$F_R(r) = 1-e^{\frac{-r^2}{2}}$$
+Derivando em relação a $r$, aplicando a regra da cadeia, temos que a função de densidade de R:
+
+$$f_R(r) = r\ e^{\frac{-r^2}{2}}$$
+Definindo:
+
+$$\Theta = 2 \pi U_2$$
+
+Pela função de distribuição de $\Theta$:
+
+$$F_\Theta(\theta)=P(\Theta<=\theta)$$
+$$F_\Theta(\theta)=P(2 \pi U_2<=\theta)$$
+
+Dividindo ambos lados por $2 \pi$, temos:
+
+$$F_\Theta(\theta)=P(U_2<=\frac{\theta}{2 \pi})$$
+Como, $U_2$ ~ $U(0,1)$, pela sua função de distribuição, sabemos que $P(U_2<=u) = u$, logo, considerando $u= \frac{\theta}{2 \pi}$, temos:
+
+$$F_\Theta(\theta) = F_{U_2}(\frac{\theta}{2 \pi})$$
+
+$$F_\Theta(\theta) = \frac{\theta}{2 \pi}$$
+
+Derivando em relação a $\theta$, temos que a função de densidade de V:
+
+$$f_\Theta(\theta) = \frac{1}{2 \pi}$$
+
+Dessa forma, definimos:
+
+$$X_1 = R\ cos(\Theta)$$
+
+$$X_2 = R\ sen(\Theta)$$
+Ou seja, podemos expressar:
+
+$$X_1 = g_1(R,\Theta)$$
+$$X_2 = g_2(R, \Theta)$$
+
+E, inversamente:
+
+$$R = h_1(X_1, X_2) = \sqrt{X_1^2+X_2^2}$$
+
+$$\Theta = h_2(X_1, X_2) = arctg(\frac{X_1}{X_2})$$
+
+Pelo método jacobiano, definimos:
+
+$$f_{X_1, X_2}(x_1, x_2) = f_{R,\Theta}(h_1(x_1, x_2), h_2(x_1, x_2)) \ \|J\|$$
+
+Como, $U_1$ e $U_2$ são independentes, temos que R e $\Theta$ também são, logo a conjunta de R e $\Theta$:
+
+$$f_{R, \Theta}(r,\theta)=f_R(r)f_\Theta(\theta)=\frac{r}{2 \pi} e^{\frac{-r^2}{2}}$$
+
+ou seja:
+
+$$f_{R,\Theta}(h_1(x_1, x_2), h_2(x_1, x_2))=\frac{\sqrt{x_1^2+x_2^2}}{2 \pi} e^{\frac{-(x_1^2+x_2^2)}{2}}$$
+
+Além disso, definimos o jacobiano:
+
+$$J = 
+\begin{bmatrix}
+    \frac{\partial{h1}}{\partial{x_1}}       & \frac{\partial{h1}}{\partial{x_2}}\\
+    \frac{\partial{h2}}{\partial{x_1}}       & \frac{\partial{h2}}{\partial{x_2}} \\
+\end{bmatrix} =
+\begin{bmatrix}
+    \frac{-2x_1}{2\sqrt{x_1^2+x_2^2}}       & \frac{-2x_2}{2\sqrt{x_1^2+x_2^2}}\\
+    \frac{1}{x_2\ (\frac{x_1^2}{x_2^2}+1)}       & \frac{-x_1}{x_2^2\ (\frac{x_1^2}{x_2^2}+1)} \\
+\end{bmatrix}
+$$
+Dessa forma, temos que:
+
+$$\|J\| = \frac{1}{\sqrt{x_1^2+x_2^2}}$$
+
+Com isso:
+
+$$f_{X_1, X_2}(x_1, x_2) = \frac{\sqrt{x_1^2+x_2^2}}{2 \pi} e^{\frac{-(x_1^2+x_2^2)}{2}} \frac{1}{\sqrt{x1^2+x2^2}}$$
+
+Logo:
+
+$$f_{X_1, X_2}(x_1, x_2) = \frac{1}{2 \pi} e^{\frac{-(x_1^2+x_2^2)}{2}}$$
+Pela propriedade do produto da exponencial de exponencial, temos:
+
+$$f_{X_1, X_2}(x_1, x_2) = \frac{1}{2 \pi} e^{\frac{-x_1^2}{2}} \ e^{\frac{-x_2^2}{2}}$$
+Uma vez que, $2\pi = \sqrt{2\pi}\sqrt{2\pi}$, concluímos:
+
+$$f_{X_1, X_2}(x_1, x_2) = \frac{1}{\sqrt{2\pi}} e^{\frac{-x_1^2}{2}} \ \frac{1}{\sqrt{2\pi}}e^{\frac{-x_2^2}{2}}$$
+
+Dessa forma, consideramos $X_1$ e $X_2$ independentes, logo:
+
+$$f_{X_1, X_2}(x_1, x_2) = f_{X_1}(x_1)f_{X_2}(x_2)$$
+
+Ou seja:
+
+$$f_{X_1}(x_1) = \frac{1}{\sqrt{2\pi}} e^{\frac{-x_1^2}{2}}$$
+$$f_{X_2}(x_2) = \frac{1}{\sqrt{2\pi}} e^{\frac{-x_2^2}{2}}$$
+
+Ou seja, pela função de densidade de $X_1$ e $X_2$, temos que ambas as variáveis aleatórias seguem $N(0,1)$
+
+## Letra b
+
+### i
+
+Considerando $W = R^2$, temos a função de distribição de $W$:
+
+$$F_{W}(w) = P(W<=w) = P(R^2 <= w) = P(R <= \sqrt{w}) = F_R(\sqrt{w})$$
+Como foi encontrado na letra a, temos que a função de distribuição de $R$ é:
+
+$$F_R(r) = 1 - e^{\frac{-r^2}{2}}$$
+
+Ou seja:
+
+$$F_{W}(w) = F_R(\sqrt{w}) = 1 - e^{\frac{-w}{2}}$$
+Logo, pela função de distribuição de $W=R^2$, temos que segue $Exp(\frac{1}{2})$
+
+### ii
+
+Como foi encontrado na letra a, consideramos:
+
+$$R = \sqrt{-2log(U_1)}$$
+$$\Theta = 2 \pi U_2$$
+E encontramos que, $X_1$ e $X_2$ seguem $N(0,1)$, onde:
+
+$$X_1 = R \ cos(\Theta)$$
+$$X_2 = R \ sen(\Theta)$$
+
+Ou seja:
+
+$$\frac{sen(\Theta)}{cos(\Theta)} = \frac{X_2}{X_1}$$
+
+$$tan(\Theta) = \frac{X_2}{X_1}$$
+Aplicando a função $arctan$ em ambos os lados da igualdade:
+
+$$\Theta = arctan(\frac{X_2}{X_1})$$
+
+Como foi encontrado na letra a, sabemos que $f_\Theta(\theta)$ é dada por:
+
+$$f_\Theta(\theta) = \frac{1}{2 \pi}$$
+
+Ou seja, temos que $\Theta$ ~ $U(0,2\pi)$, uma vez que a densidade de uma uniforme $f_U(u) = \frac{1}{b-a}$.
+
+## Letra c
+
+```{r}
+gera_normal_box_muller <- function(N = 1E4){
+
+  # Parâmetros: N - tamanho de cada amostra da normal gerada
+  
+  # Retorno: Lista de dois elementos, onde cada um é uma amostra de tamanho N de
+  #          normal padrão, e as duas são independentes
+  
+   # Gerando as uniformes
+  U1 <- runif(N)
+  U2 <- runif(N)
+  
+   # Calculando R e Theta
+  R <- sqrt(-2*log(U1))
+  Theta <- 2*pi*U2
+  
+   # Calculando as normais
+  Z1 <- R*cos(Theta)
+  Z2 <- R*sin(Theta)
+  
+   # Retornando as normais em uma lista
+  list(Z1, Z2)
+}
+```
+
+Com o algoritmo implementado, vamos realizar alguns testes:
+
+```{r}
+ # gerando amostras de tamanho 1000
+amostras_bm <- gera_normal_box_muller(1E3)
+```
+
+```{r}
+ # Definindo duas colunas para os gráficos
+par(mfrow = c(1, 2))
+ # Gerando o histograma de X1
+hist(amostras_bm[[1]], freq = F, main = "X1", xlab = "x1", ylab = "densidade")
+ # Plotando a curva de densidade
+curve(dnorm(x), col = "blue", add = T)
+ # Gerando o histograma de X2
+hist(amostras_bm[[2]], freq = F, main = "X2", xlab = "x2", ylab = "densidade")
+ # Plotando a curva de densidade
+curve(dnorm(x), col = "blue", add = T)
+ # Plotando a legenda
+legend("topright", lwd = 1, col = "blue", legend = "N(0,1)", bty = "n")
+```
+
+Podemos ver que, aparentemente, o gerador está gerando duas normais como era esperado. A fim de confirmar isso, vamos realizar um teste de Shapiro, armazenar o p-valor e replicar o teste 1000 vezes e gerar um resumo estatístico:
+
+```{r}
+calcula_p_bm <- function(n, gerador){
+  
+  # Parâmetros: N - tamanho de cada amostra da normal gerada
+  #             gerador - gerador de números aletórios onde o resultado é
+  #                       uma lista de tamaho 2
+  
+  # Retorno: array de duas dimensões, onde cada coluna é p valor de uma amostra
+  
+   # Gera as normais
+  x <- gerador(n)
+   # Calcula p valor para X1
+  p1 <- shapiro.test(x[[1]])$p.value
+   # Calcula p valor para X2
+  p2 <- shapiro.test(x[[2]])$p.value
+   # retorna array com dois p valores
+  cbind(p1, p2)
+}
+ # Calcula os p valores 1000 vezes para amostras de tamanho 100
+p_valor <- replicate(1E3, calcula_p_bm(1E3, gera_normal_box_muller))
+```
+
+Resumo do p-valor para $X_1$:
+
+```{r}
+summary(p_valor[,1,])
+```
+
+Vamos calcular quantos % dos valores estiveram acima de 0,05 para $X_1$:
+
+```{r}
+mean(p_valor[,1,]>0.05)
+```
+
+Resumo do p-valor para $X_2$:
+
+```{r}
+summary(p_valor[,2,])
+```
+
+Observando quantos % estiveram acima de $0,05$ para $X_2$:
+
+```{r}
+mean(p_valor[,2,]>0.05)
+```
+
+Logo, vemos que, para ambas as amostras, o p-valor foi superior que 0,05 em mais de 94% dos casos, além disso mais de 75% dos valores foram acima de 0,25. Resultado que comprova o resultado do algoritmo. 
+
+Por fim, vamos verificar a eficiência e comparar com o `rnorm` através da função `microbenchmark`, gerando amostras de tamanho 10000, e como o algoritmo gera duas amostras, vamos utilizar $N=5000$ e juntar as duas amostras:
+
+```{r}
+library(microbenchmark)
+microbenchmark(rnorm(1E4),
+               unlist(gera_normal_box_muller(1E4/2)))
+```
+
+Podemos ver que existe uma diferença do tempo em relação ao `rnorm`, onde o `rnorm` é mais eficiente, porém essa diferença não é tão grande.
+
+## Letra d
+
+
+Sabemos que $R^2$ segue $Exp(\frac{1}{2})$, logo sua função se distribuição é:
+
+$$F_R^2(r^2) = 1 - e^{\frac{-r^2}{2}}$$
+Considerando $V=e^{\frac{-r^2}{2}}$
+
+$$F_V(v) = P(V<=v) = P(e^{\frac{-r^2}{2}} <= v)$$
+
+Aplicando $log$ nos dois lados da inequação:
+
+$$F_V(v) = P(\frac{-r^2}{2} <= log(v)) = P(r^2 > -2log(v)) = 1-P(r^2 <= -2log(v))$$
+Ou seja, aplicando $-2log(v)$ em $F_{R^2}(r^2)$:
+
+$$F_V(v) =  1-F_{R^2}(-2log(v)) = 1-(1-e^{\frac{2log(v)^2}{2}}) = e^{log(v)}$$
+
+Pelas propriedades do $log$, onde $e^{log(x)}=x$:
+
+$$F_V(v) = e^{log(v)} = v$$
+Além disso, se derivarmos ambos os lados em relação a v temos:
+
+$$f_V(v) = 1$$
+
+Ou seja, temos que $V$~$U(0,1)$
+
+Dessa forma, vamos implementar funções para gerar $R^2$ e $\Theta$:
+
+```{r}
+gera_r2 <- function(n){
+  # Parâmetros: n - tamanho da amostra
+  
+  # Retorno: vetor da amostra de R2
+  
+   # Gerando a uniforme
+  U <- runif(n)
+   # Calculando R2
+  R2 <- -2*log(U)
+   # Retornando R2
+  R2
+}
+```
+
+Com o gerador implementado, vamos realizar alguns testes a fim de visualizar seu comportamento:
+
+```{r}
+ # Gerando uma amostra de tamanho 10000 de R2
+r2 <- gera_r2(1E4)
+ # Plotando o histograma
+hist(r2, freq = F, main = "Amostra de tamanho 10000 de R2")
+ # Plotando a curva da densidade
+curve(dexp(x, 0.5), add = T, col = "blue")
+ # Plotando a legenda
+legend("topright", lwd = 1, col = "blue", legend = "Exp(0.5)", bty = "n")
+```
+
+Vemos que a curva de densidade da exponencial se aproxima do histograma de $R^2$.  
+
+Agora, vamos implementar um gerador para $\Theta$:
+
+```{r}
+gera_theta <- function(n){
+  # Parâmetros: n - tamanho da amostra
+  
+  # Retorno: amostra de theta
+  
+   # Gerando a uniforme
+  U <- runif(n)
+   # Calculando theta
+  theta <- 2*pi*U
+   # Retornando theta
+  theta
+}
+```
+
+Com o gerador implementado, vamos relizar alguns testes:
+
+```{r}
+ # Gerando uma amostra de tamanho 10000 de theta
+theta <- gera_theta(1E4)
+ # Plotando o histograma
+hist(theta, freq = F, main = "Amostra de tamanho 10000 de Theta", breaks = 10)
+ # Plotando a curva da densidade
+curve(dunif(x, max = 2*pi), add = T, col = "blue", from = 0, to = 2*pi)
+ # Plotando a legenda
+legend(5, 0.18, lwd = 1, col = "blue", legend = "U(0, 2pi)", bty = "n")
+```
+
+Vemos que a curva da denside da uniforme se aproxima do histogama de da amostra de $\Theta$.
+
+## Letra e
+
+Segue a função para gerar normais pelo algoritmo polar de box muller:
+
+```{r}
+gera_normal_box_muller_polar <- function(N = 1E4){
+
+  # Parâmetros: N - tamanho da amostra
+  
+  # Retorno: Lista de dois elementos, onde cada um é uma amostra de tamanho N de
+  #          normal padrão, e as duas são independentes
+  
+   # Calculando valores que faltam a serem gerados
+  faltantes <- N
+   # Iniciando vetores de X1 e X2
+  X1 <- c()
+  X2 <- c()
+  
+   # Criando um loop para descartar se (U1+U2)^2<1
+  while(faltantes > 0){
+    
+     # Gerando as uniformes entre -1 e 1
+    U1 <- 2*runif(faltantes)-1
+    U2 <- 2*runif(faltantes)-1
+    
+     # calculando S
+    S <- U1**2 + U2**2
+    
+     # vericando se S é menor que 1
+    S <- ifelse(S < 1, S, NA)
+     # Verificando as posições onde S foi maior que 1
+    na_i <- is.na(S)
+     # Calculando os numeros que faltam a serem gerados
+    faltantes <- sum(na_i)
+     # Eliminando os valores maiores que 1
+    S <- S[!na_i]
+    
+     # Calculando Z
+    Z <- sqrt(-2*log(S)/S)
+    
+     # Calculando X1 e X2
+    X1_i <- Z * U1[!na_i]
+    X2_i <- Z * U2[!na_i]
+
+     # Concatenando X1 e X2 com seus vetores
+    X1 <- c(X1, X1_i)
+    X2 <- c(X2, X2_i)
+  }
+   # Retornando uma lista com X1 e X2
+  list(X1, X2)
+}
+```
+
+Com o algoritmo implementado, vamos realizar alguns testes:
+
+```{r}
+ # gerando amostras de tamanho 1000
+amostras_bm_polar <- gera_normal_box_muller_polar(1E3)
+```
+
+```{r}
+ # Definindo duas colunas para os gráficos
+par(mfrow = c(1, 2))
+ # Gerando o histograma de X1
+hist(amostras_bm_polar[[1]], freq = F, main = "X1", xlab = "x1", ylab = "densidade")
+ # Plotando a curva de densidade
+curve(dnorm(x), col = "blue", add = T)
+ # Gerando o histograma de X2
+hist(amostras_bm_polar[[2]], freq = F, main = "X2", xlab = "x2", ylab = "densidade")
+ # Plotando a curva de densidade
+curve(dnorm(x), col = "blue", add = T)
+ # Plotando a legenda
+legend("topright", lwd = 1, col = "blue", legend = "N(0,1)", bty = "n")
+```
+
+Podemos ver que, aparentemente, o gerador está gerando duas normais como era esperado. A fim de confirmar isso, vamos realizar um teste de Shapiro, armazenar o p-valor e replicar o teste 1000 vezes da mesma forma que foi feito na letra c, onde foi definida a função `calcula_p_bm`:
+
+```{r}
+ # Calcula os p valores 1000 vezes para amostras de tamanho 100
+p_valor_polar_bm <- replicate(1E3, calcula_p_bm(1E3, gera_normal_box_muller_polar))
+```
+
+
+Resumo do p-valor para $X_1$:
+
+```{r}
+summary(p_valor_polar_bm[,1,])
+```
+
+Vamos calcular quantos % dos valores estiveram acima de 0,05 para $X_1$:
+
+```{r}
+mean(p_valor_polar_bm[,1,]>0.05)
+```
+
+Resumo do p-valor para $X_2$:
+
+```{r}
+summary(p_valor_polar_bm[,2,])
+```
+
+Observando quantos % estiveram acima de $0,05$ para $X_2$:
+
+```{r}
+mean(p_valor_polar_bm[,2,]>0.05)
+```
+
+Logo, vemos que o resultado foi muito parecido com o resultado do algoritmo de Box-Muller implementado na letra c, onde mais de 94% dos p-valores foram maiores que 0,05.
+
+Por fim, vamos verificar a eficiência e comparar com o `rnorm` e com o algoritmo de Box-Muller `gera_normal_box_muller`, através da função `microbenchmark`, gerando amostras de tamanho 10000, e como o algoritmo gera duas amostras, vamos utilizar $N=5000$ e juntar as duas amostras:
+
+```{r}
+library(microbenchmark)
+microbenchmark(rnorm(1E4),
+               unlist(gera_normal_box_muller(1E4/2)),
+               unlist(gera_normal_box_muller_polar(1E4/2)))
+```
+
+Podemos ver que utilizando o algoritmo polar tivemos um pequeno aumento em relação ao tempo de execução ao algoritmo de Box Muller.
+
+## Letra f
+
+Segue a função para o algoritmo:
+
+```{r}
+gera_normal_exp <- function(N = 1E4){
+  
+  # Parâmetros: N - tamanho da amostra
+  
+  # Retorno: amostra normal padrão
+
+   # Calculando os faltantes
+  faltantes <- N
+   # Iniciando o vetor para a amostra 
+  X <- c()
+  
+   # Definindo o loop ate não faltar nenhum valor a ser gerado
+  while(faltantes > 0){
+    
+     # Gerando as exponenciais
+    Y1 <- rexp(faltantes)
+    Y2 <- rexp(faltantes)
+    
+     # Verificando a condicao
+    Y <- ifelse(Y2 > (1-Y1)**2/2, Y1, NA)
+     # Verificando quando as posicoes onde a condicao não foi satisfeita
+    na_i <- is.na(Y)
+     # Calculando faltantes
+    faltantes <- sum(na_i)
+    
+     # Eliminando os Na onde a condição não foi satisfeita
+    Y <- Y[!na_i]
+     # Gerando a uniforme para definir o sinal
+    U_sinal <- runif(length(Y))
+     # Definindo os sinais pela uniforme
+    Xi <- ifelse(U_sinal < 0.5, Y, -Y)
+
+     # Concatenando Xi com o vetor de X
+    X <- c(X, Xi)
+  }
+   # Retornando a amostra
+  X
+}
+```
+
+
+```{r}
+ # gerando amostras de tamanho 1000
+amostra_normal_exp <- gera_normal_exp(1E3)
+```
+
+```{r}
+ # Gerando o histograma de X1
+hist(amostra_normal_exp, freq = F, main = "Amostra normal gerada por exponenciais",
+     xlab = "x", ylab = "densidade")
+ # Plotando a curva de densidade
+curve(dnorm(x), col = "blue", add = T)
+ # Plotando a legenda
+legend("topright", lwd = 1, col = "blue", legend = "N(0,1)", bty = "n")
+```
+
+Aparentemente, por mais que a curva da normal se aproxime do histograma, vemos uma certa assimetria a esquerda, vamos realizar testes de hipótese novamente e analisar os p-valores.
+
+```{r}
+p_valores_normal_exp <- replicate(1E3, shapiro.test(gera_normal_exp(1E3))$p.value)
+```
+
+Resumo do p-valor:
+
+```{r}
+summary(p_valores_normal_exp)
+```
+
+Observando quantos % estiveram acima de $0,05$:
+
+```{r}
+mean(p_valores_normal_exp>0.05)
+```
+Ou seja, temos que 95% dos p-valores são maiores que 0,05, e, além disso, 75% são maiores que 0,26, provando ser um algoritmo consistente para geração de normal, nesse caso, com $n=1000$.
+
+Vamos comparar, agora, seu desempenho computacional com os demais métodos anteriores:
+
+```{r}
+microbenchmark(rnorm(1E4),
+               unlist(gera_normal_box_muller(1E4/2)), 
+               unlist(gera_normal_box_muller_polar(1E4/2)),
+               gera_normal_exp(1E4))
+```
+
+Vemos que houve um aumento significativo em relação ao tempo, em que a mediana ultrapassou o dobro de todos os demais métodos.
+
+## Letra g
+
+Definindo gerador:
+
+```{r}
+gera_normal_tcl_unif <- function(n, n_uniforme){
+  
+  # Parãmetros: n - tamanho amostra
+  #             n_uniforme: tamanho da uniforme, vai influenciar na variância
+  
+  # Retorno: Amostra N(0,n_uniforme/12)
+  
+   # Gerando as U(-0.5, 0.5)
+  U <- replicate(n, runif(n_uniforme)-0.5)
+   # Somando cada amostra da uniforme
+  Z <- apply(U, 2, sum)
+   # Retornando Z
+  Z
+}
+```
+
+### i
+
+Temos $Z = \sum^n_{i=1}U_i$, com $U_i$ ~ $U(-\frac{1}{2},\frac{1}{2})$ logo, como a esperança da soma é a soma das esperanças temos:
+
+$$E(Z) = E(\sum^n_{i=1}U_i) = \sum^n_{i=1}E(U_i)$$
+
+Como $U_i$ são identicamente distribuídas, onde:
+
+$$E(U_i) = \frac{a+b}{2} = \frac{\frac{-1}{2} + \frac{1}{2}}{2} = 0$$
+Logo o somatório das esperanças de $U_i$ será zero, ou seja:
+
+$$E(Z) = 0$$
+
+Além disso, temos a variância de $Z$ como:
+
+$$Var(Z) = Var(\sum^n_{i=1}U_i)$$
+
+Como $U_i$ são independentes, temos que a variância da soma vai ser a soma das variâncias:
+
+$$Var(Z) = \sum^n_{i=1}Var(U_i)$$
+
+Sabemos que a variância de uma uniforme, é dada por:
+
+$$Var(U) = \frac{1}{12}(b-a)^2$$
+
+Considerando $a=-\frac{1}{2}$ e $b = \frac{1}{2}$, temos:
+
+$$Var(U_i) = \frac{1}{12}$$
+Como $U_i$ são identicamente distribuídas, temos:
+
+$$Var(Z) = n \ Var(U_1) = \frac{n}{12}$$
+
+Ou seja, $Var(Z) = 1$ quando $n=12$.
+
+### ii
+
+Temos que este algoritmo vai ser influenciado pelo tamanho da uniforme, em que, dependendo do valor de $n$ da uniforme gerada, vamos ter uma influência na variância. Isto ocorre, pois de acordo com Teorema Central do Limite, temos que a média de uma distribuição se aproxima de uma normal quando n aumenta, da seguinte forma:
+
+$$\bar{X}\sim N(E(X), \frac{Var(X)}{n}), n\to \infty$$ 
+Considerando $X\sim U(-0.5, 0,5)$, temos que:
+
+$$\bar{X}\sim N(0, \frac{1}{12\ n}), n\to \infty$$ 
+
+Logo, considerando $Z = \sum_{i=1}^nU_i=\bar{X}n$, temos:
+
+$$Z\sim N(0, \frac{n^2}{12\ n}) = N(0, \frac{n}{12})$$
+Mesmo resultado encontrado em i para $E(Z)$ e $Var(Z)$.
+
+### iii
+
+Vamos realizar os testes e observar o que foi provado:
+
+```{r}
+ # Definindo os valores de n 
+n <- c(12, 48, 96)
+ # Gerando as amostras
+amostras_tcl <- lapply(n, function(n) gera_normal_tcl_unif(1000, n))
+```
+
+```{r}
+ # Defindo a matriz de gráficos
+layout(matrix(c(1,1,2,2,0,3,3,0), ncol=4, byrow = T))
+ # Plotando os histogramas com suas curvas de densidade
+invisible(
+  lapply(1:3,
+         function(i){
+              # Plotando histograma
+             hist(amostras_tcl[[i]], freq = F, xlab = "x", ylab = "densidade",
+                  main = paste("n =", n[i]), breaks = 20, xlim = c(-10, 10))
+              # Plotando curva de densidade
+             curve(dnorm(x, 0, sqrt(n[i]/12)), add = T, col = "blue")
+              # Plotando as legendas
+             legend("topleft", col = "blue", lwd = 1, legend = sprintf("N(0, %.0f)", n[i]/12), bty = "n")
+           }
+         )
+)
+```
+
+A partir do histograma, vemos o efeito na variância da normal, no entanto para todos os valores de $n$ vemos uma aproximação da normal teórica em relação ao histograma.
+
+Agora vamos verificar pelo teste de Shapiro se é um gerador consistente e comparar com os demais testados.
+
+```{r}
+ # Calculando os p valores para cada valor de n
+p_valores_tcl <- 
+  lapply(c(12, 48, 96),
+       function(n){
+          replicate(1000, shapiro.test(gera_normal_tcl_unif(100, n))$p.value)
+         }
+       )
+```
+
+Vamos observar os quartis, juntamente com o máximo e mínimo:
+
+```{r}
+lapply(p_valores_tcl, summary)
+```
+
+Para todos os valores testados de $n$, não aparente ter uma influência no teste, e esses quartis se aproximam dos demais testes com os outros testes. Agora vamos ver quantos foram abaixo de 0,05.
+
+```{r}
+lapply(p_valores_tcl, function(x) mean(x>0.05))
+```
+
+Pelos testes, vemos que em todos os casos, o p-valor foi maior que 0,05 em mais de 95% dos testes. Mostrando ser um gerador consistente para a distribuição normal.
+
+Por fim, vamos comparar o tempo de execução deste gerador com os demais testados.
+
+```{r}
+microbenchmark(rnorm(1E4),
+               unlist(gera_normal_box_muller(1E4/2)), 
+               unlist(gera_normal_box_muller_polar(1E4/2)),
+               gera_normal_exp(1E4),
+               gera_normal_tcl_unif(1E4, 12))
+```
+
+Observando os tempos de execução, vemos que este método é o mais demorado até agora, onde a mediana do tempo foi mais de 50 vezes mais que o `rnorm`, e quase 50 vezes mais que o algoritmo de Box Muller. 
+
+## Letra h
+
+Considerando, a aproximação da inversa de uma função de distribuição da normal padrão:
+
+$$\Phi^{-1}(alpha) = t-\frac{a_0+a_1t}{1+b_1t+b_2t^2}\\
+\ t=log(\alpha^{-2}), \ a_0=2,30753, \ a_1 = 0,27061, \ b_1 = 0,99229, \ b_2 = 0,04481$$
+
+```{r}
+ # Definindo as constantes
+a_0 <- 2.30753; a_1 <- 0.27061;b_1 <- 0.99229; b_2 <- 0.04481
+
+ # Definindo a função inversa da distribuição acumulada
+inversa_phi <- function(alpha){
+   # Calculando t2
+  t2 <- -2*log(alpha)
+   # Calculando t
+  t1 <- sqrt(t2)
+   # Calculando x
+  x <- -(t1 - ((a_0+a_1*t1)/(1+b_1*t1+b_2*t2)))
+  x
+}
+```
+
+A fim de analisar a função inversa, vamos comparar com a função `qnorm`:
+
+```{r}
+ # Definindo uma amostra uniforme entre 0 e 1 testar a função inversa 
+p_testes <- runif(10)
+ # Calculando pela inversa aproximada
+inversa_phi(p_testes)
+ # Calculando pela qnorm
+qnorm(p_testes)
+```
+
+Vemos que a aproximação não parece estar  boa se comparada ao `qnorm`, em alguns casos houve uma difrença significativa. Vamos testar agora na geração de números aleatórios:
+
+```{r}
+gera_normal_as <- function(n){
+  
+  # Parâmetros: n - tamanho da amostra
+  
+  # Retorno: amostra normal padrão
+  
+   # Gerando a uniforme
+  U <- runif(n)
+   # Calculando x pela inversa
+  inversa_phi(U)
+}
+```
+
+```{r}
+ # Gerando uma amostra de tamanho 1000
+x_normal_as <- gera_normal_as(1E3)
+```
+
+```{r}
+hist(x_normal_as, freq = F, main = "Amostra normal aproximação A-S", xlab = "x",
+     ylab = "densidade")
+curve(dnorm(x), col = "blue", add = T)
+legend("topleft", col = "blue", legend = "N(0, 1)", lwd = 1, bty = "n")
+```
+
+Vemos que a curva normal se aproxima do histograma, no entanto, existe uma assimetria a esquerda. 
+
+### ii
+
+Vamos testar pelo teste de Shapiro se esse gerador é consistente para $n=1000$.
+
+```{r}
+p_valor_as <- replicate(1000, shapiro.test(gera_normal_as(1E3))$p.value)
+```
+
+Vamos analisar os quartis dos p valores:
+
+```{r}
+summary(p_valor_as)
+```
+Vemos um desempenho muito ruim, onde o valor máximo foi abaixo de 0,1.
+
+```{r}
+mean(p_valor_as > 0.05)
+```
+Vemos que apenas $0,5$% dos p valores foi acima de $0,05$, utilizando o Box Muller este resultado foi próximo de $95$%. Com isso, este gerador utilizando a aproximação da inversa obteve um desempenho muito ruim, ou seja, este gerador não é indicado a fim de gerar normais.
+
+Por fim, vamos analisar sua eficiência computacional:
+
+```{r}
+microbenchmark(rnorm(1E4),
+               unlist(gera_normal_box_muller(1E4/2)), 
+               unlist(gera_normal_box_muller_polar(1E4/2)),
+               gera_normal_exp(1E4),
+               gera_normal_tcl_unif(1E4, 12),
+               gera_normal_as(1E4))
+```
+Vemos que computacionalmente é bem rápido, se aproximando dos resultados do `rnorm`, no entanto vimos que não é um algoritmo confiável.
+
+# Questão 2
+
+## Letra a
+
+Considerando, $X_1$ e $X_2$ independentes seguindo $N(0,1)$, definimos:
+
+$$Y = \frac{X_1}{X_2}$$
+
+$$W=X_2$$
+
+Podemos definir:
+
+$$X_1 = YW$$
+$$X_2 = W$$
+Definindo o módulo do jacobiano, temos
+
+$$J = 
+\begin{bmatrix}
+    W       & Y\\
+    0       & 1 \\
+\end{bmatrix} = W
+$$
+Ou seja:
+
+$$|J| = |W|$$
+Como $X_1$ e $X_2$ são independentes, temos a conjunta:
+
+$$f_{X_1,X_2}(x_1, x_2) = \frac{1}{2\pi}e^{\frac{-(x_1^2+x_2^2)}{2}}$$
+
+Dessa forma:
+
+$$f_{Y,W}(y, w) = f_{X_1,X_2}(yw, w) |J| = \frac{1}{2\pi}e^{\frac{-(y^2w^2+w^2)}{2}} \ |w|$$
+ A fim de encontrar $f_Y(y)$, vamos integrar $f_{Y,W}(y, w)$, em relação a w:
+
+$$f_Y(y) = \frac{1}{2\pi}\int_{-\infty}^\infty e^{\frac{-(y^2w^2+w^2)}{2}} \ |w| dw$$
+Como $W$ é simétrica, podemos integrar apenas no intervalo 0 a $\infty$ e multiplicar por dois, dessa forma podemos considerar $|w|=w$
+
+$$f_Y(y) = \frac{2}{2\pi}\int_{0}^\infty e^{\frac{-(y^2w^2+w^2)}{2}} \ w\  dw$$
+Considerando $t=\frac{w^2(y^2+1)}{2}$, logo $dt = w(y^2+1) \ dw$, ou seja $w \ dw= \frac{dt}{y^2+1}$:
+
+$$f_Y(y) = \frac{1}{\pi}\int_{0}^\infty e^{-t} \frac{dt}{y^2+1} = \frac{1}{\pi (y^2+1)}$$
+Logo, temos que $Y$~$Cauchy(0,1)$
+
+Dessa forma, vamos implementar uma função para gerar $Y$.
+
+```{r}
+gera_cauchy_box_muller <- function(n){
+   # Gerando duas normais pelo algoritmo de Box muller
+  X <- gera_normal_box_muller(n)
+   # Dividino uma normal por outra
+  X[[1]]/X[[2]]
+}
+```
+
+Vamos realizar alguns testes para visualizar esse gerador na prática:
+
+```{r}
+amostra_cauchy_bm <- gera_cauchy_box_muller(500) 
+```
+
+```{r}
+ # Plotando histograma
+hist(amostra_cauchy_bm, main = "Amostra Cauchy pela divisão de normais - Box Muller", freq = F, breaks = 100, xlab = "X", ylab = "densidade")
+ # Plotando a densidade
+curve(dcauchy(x), col = "blue", add = T)
+ # Plotando a legenda
+legend("topright", legend = "Cauchy(0,1)", col = "blue", lwd = 1, bty = "n")
+```
+
+Podemos ver que, o histograma se aproxima bastante da curva da densidade.
+
+## Letra b
+
+Sabemos que se $X$ ~ $Cauchy(0, 1)$, sua função de densidade é dada por:
+
+$$f_X(x) = \frac{1}{\pi (y^2+1)}$$
+A fim, de encontrar a função de distribuição de $X$ vamos integrar $f_x(x)$ a fim de encontrar sua primitiva:
+
+$$F_X(x) = \int\frac{1}{\pi (x^2+1)} \ dx$$
+$$F_X(x) = \frac{1}{\pi} \int\frac{1}{(x^2+1)} \ dx$$
+Como a derivada do $arctan(x)$ é $\frac{1}{x^2+1}$, concluímos:
+
+$$F_X(x) = \frac{arctan(x)}{\pi}$$
+
+Dessa forma, temos a inversa aplicada na função de distribuição como:
+
+$$F_X(F_X^{-1}(p)) = p$$
+
+$$\frac{arctan(F_X^{-1}(p))}{\pi} = p$$
+Multiplicando ambos os lados por $\pi$ e aplicando a função tangente:
+
+$$F_X^{-1}(p) = tan(\pi p)$$
+
+Uma vez que, encontramos a inversa da função de distribuição da $Cauchy$, vamos criar um gerador para gerar valores aleatórios da $Cauchy$ pelo método da inversa:
+
+```{r}
+ # Definindo o gerador
+gera_cauchy_inversa <- function(n){
+  
+  # Parâmetros: n - tamanho da amostra
+  
+  # Retorno: vetor da amostra da cauchy
+  
+   # Gerando a uniforme entre 0 e 1
+  U <- runif(n)
+   # Aplicando a amostra U na inversa da distribuição da cauchy
+  tan(pi*U)
+}
+```
+
+```{r}
+amostra_cauchy_inv <- gera_cauchy_inversa(500) 
+```
+
+```{r}
+ # Plotando histograma
+hist(amostra_cauchy_inv, main = "Amostra Cauchy pela inversa", freq = F, breaks = 100, xlab = "x", ylab = "densidade")
+ # Plotando a densidade
+curve(dcauchy(x), col = "blue", add = T)
+ # Plotando a legenda
+legend("topright", legend = "Cauchy(0,1)", col = "blue", lwd = 1, bty = "n")
+```
+
+Podemos ver, que pelo método da inversa, o histograma da amostra se aproxima bastante da curva da densidade da $Cauchy$ padrão. 
+
+## Letra c
+
+Vamos verificar a eficiência computacional dos dois métodos, para $n=10000$.
+
+```{r}
+microbenchmark(gera_cauchy_box_muller(1E4), 
+               gera_cauchy_inversa(1E4))
+```
+Podemos ver que o método da inversa teve um desempenho muito melhor, em que a mediana foi próximo a um quarto do tempo utilizando a razão de normais.
+
+## Letra d
+
+Como o método da inversa foi mais eficiente, vamos utilizá-lo a fim de gerar 1000 vezes amostras de tamanho 1000 e calcular a sua média a fim de estudar o comportamento de $\bar{X}$ e relacionar com o Teorema Central do Limite.
+
+
+Primeiro vamos gerar essa distribuição através do `replicate`
+
+```{r}
+medias_cauchy <- replicate(1000, mean(gera_cauchy_inversa(1000)))
+```
+
+```{r}
+hist(medias_cauchy, freq = F, main = "Histograma de 1000 médias de amostras de tamanho 1000 da Cauchy", xlab = "x barra", ylab = "Densidade")
+```
+
+Pelo histograma não aparente seguir uma distribuição normal, vamos utilizar o teste de Shapiro.
+
+```{r}
+shapiro.test(medias_cauchy)
+```
+
+Pelo teste podemos descartar que segue distribuição normal, vamos replicar o teste mil vezes:
+
+```{r}
+p_valor_cauchy_media <- replicate(1000, shapiro.test(replicate(1000, mean(gera_cauchy_inversa(1000))))$p.value)
+```
+
+Vamos analisar os quartis:
+
+```{r}
+summary(p_valor_cauchy_media)
+```
+Podemos ver um resultado horrível com o valor máximo muito baixo. Ou seja, descartamos nos 1000 testes que a distribuição de $\bar{X}$ segue distribuição normal quando $X$ segue uma $Cauchy$, logo temos evidências que o resultado do Teorema Central do Limite não vale para $Cauchy$. 
+
+# Questão 3
+
+Considerando $X$ ~ $Exp(1)$, temos sua função de distribuição como:
+
+$$F_X(x) = 1 - e^{-x}$$
+
+Podemos encontrar a sua inversa da seguinte forma:
+
+$$F_X(F_X(p)^{-1}) = p$$
+
+Aplicando $F_X(x)^{-1}$ em $F_X(x)$, temos:
+
+$$1 - e^{-F_X(p)^{-1}} = p\\
+-e^{-F_X(p)^{-1}} = p-1\\
+e^{-F_X(p)^{-1}} = 1-p$$
+
+Aplicando $log$ em ambos os lados:
+
+$$-F_X(p)^{-1} = log(1-p)$$
+Multiplicando ambos os lados por $-1$, concluímos:
+
+$$F_X(p)^{-1} = -log(1-p)$$
+
+Uma vez que estamos interessados na condicial $X|X<0,05$, vamos calcular a probabilidade de $X<0,05$, pela sua função de distribuição:
+
+$$P(X<0,05)=F_X(0,05)=1-e^{-0,05}$$
+
+Ou seja, a fim de gerar amostras aleatórias da distribuição de $X|X<0,05$, vamos utilizar o método da inversa, no entanto em vez de utilizar uma uniforme entre 0 e 1, vamos utilizar uma uniforme entre 0 e $1-e^{-0,05}$, dessa forma vamos gerar valores apenas entre 0 e 0,05.
+
+```{r}
+gera_exp_cond <- function(n, x_max = 0.05){
+  # Parâmetros: n - tamanho da amostra
+  #             x_max - maior valor da exponencial da condicional
+  
+  # Retorno: Amostra de X ~ Exp(1)|X < x_cond
+  
+   # Gerando a uniforme
+  U <- runif(n, 0, 1 - exp(-x_max))
+   # Aplicando a uniforme na inversa da exponencial
+  -log(1-U)
+}
+```
+
+Como definimos o gerador, vamos visualizar na prática e comparar com a densidade de X:
+
+```{r}
+ # Gerando amostra de tamanho 1000
+x_exp_cond <- gera_exp_cond(1E3)
+```
+
+```{r}
+ # Definindo a função da densidade
+f_3 <- function(x) exp(-x)/(1-exp(-0.05))
+ # Plotando o histograma 
+hist(x_exp_cond, freq=F, breaks = 10, xlab = "amostra", ylab = "densidade",
+     main = "Histograma de X|X<0,05")
+ # Plotando a densidade
+curve(f_3, from = 0, to = 0.05, add = T, col = "blue")
+```
+
+Podemos ver que o histograma se aproxima da densidade, agora vamos verificar a média dessa amostra de tamanho 1000:
+
+```{r}
+mean(x_exp_cond)
+```
+
+## Letra b
+
+Dado que:
+
+$$
+f_X(x)=
+\begin{cases}
+\frac{e^{-x}}{1-e^{-0,05}}, se\ 0<x<0,05\\
+0,\ caso\ contrário\\
+\end{cases}
+$$
+Temos que $E(X|X<0,05)$ é dada pela integral de $\int{xf_X(x)dx}$, ou seja:
+
+$$E(X|X<0,05) = \int_{-\infty}^0{x \ 0 \ dx}+\int_0^{0,05}{\frac{x \ e^{-x}}{1-e^{-0,05}} \ dx}+\int_{0,05}^\infty{x \ 0 \ dx}$$
+$$E(X|X<0,05) = \int_0^{0,05}{\frac{x \ e^{-x}}{1-e^{-0,05}} \ dx}$$
+
+$$E(X|X<0,05) = \frac{1}{1-e^{-0,05}}\int_0^{0,05}{x \ e^{-x} \ dx}$$
+
+Utilizando derivação por partes, onde:
+
+$$u = x\ \ \ \ \ \ \ \ \  dv = e^{-x}$$
+$$du = dx\ \ \ \ \ \ \ \ \  v = -e^{-x}$$
+
+Temos que:
+
+$$\int_0^{0,05}{x \ e^{-x} \ dx} = [-x \ e^{-x}]_0^{0,05} -\int_0^{0,05}{-e^{-x} \ dx}$$
+
+$$\int_0^{0,05}{x \ e^{-x} \ dx} = [-x \ e^{-x}]_0^{0,05} + [-e^{-x}]_0^{0,05}$$
+
+$$\int_0^{0,05}{x \ e^{-x} \ dx} = [-x \ e^{-x} -e^{-x}]_0^{0,05} = [-e^{-x}(x+1)]_0^{0,05}$$
+
+$$\int_0^{0,05}{x \ e^{-x} \ dx} = -e^{-0,05}(1,05)+e^0$$
+Logo:
+
+$$E(X|X<0,05) = \frac{1}{1-e^{-0,05}}[-e^{-0,05}(1,05)+e^0] = 0.02479168$$
+
+Dessa forma, temos que a média da amostra de tamanho $1000$ se aproxima bastante do valor esperada, onde o erro foi na quarta casa decimal, ou seja, na casa de $10^{-4}$.
+
+# Questão 4
+
+Uma vez que temos:
+
+$$
+F_X(x)=
+\begin{cases}
+\frac{1-e^{-2x}+2x}{3}, se\ 0<x<1\\
+\frac{3-e^{-2x}}{3}, se\ 1<x<\infty\\
+\end{cases}
+$$
+Ou seja, podemos considerar uma mistura de duas distribuições, onde:
+
+$$F_X(x)=p_1F_{X_1}(x_1)+p_2F_{X_2}(x_2)$$
+
+Em que:
+
+$$F_{X_1}(x_1)=\frac{1-e^{-2x_1}+2x_1}{3}, 0<x_1<1\\
+F_{X_2}(x_2)\frac{3-e^{-2x_2}}{3}, 1<x_2<\infty\\$$
+
+Afim de achar $p_1$, vamos calcular a probabilidade de X estar entre 0 e 1:
+
+$$p_1 = F_{X_1}(1)-F_{X_1}(0) = \frac{1-e^{-2}+2}{3} - \frac{1-e^{0}}{3} = \frac{3-e^{-2}}{3}-0=0.9548882$$
+Além disso, temos $p_2$ como:
+
+$$p_2 = 1-F_{X_2}(1) = 1 - \frac{3-e^{-2}}{3} = 1-0.9548882=0.04511176$$
+Dessa forma, estabelecemos que $p_1+p_2=1$.
+
+A fim de contruir um gerador de números aleatórios dessa distribuição, vamos utiliizar o método da inversa. Para $F_{X_2}(x_2)$ podemos achar sua inversa analiticamente da seguinte forma:
+
+$$F_{X_2}(F_{X_2}^{-1}(p)) = p\\
+\frac{3-e^{-2F_{X_2}^{-1}(p)}}{3} = p\\
+e^{-2F_{X_2}^{-1}(p)} = 3-3p$$
+
+Aplicando $log$ em ambas as partes, concluímos:
+
+$$-2F_{X_2}^{-1}(p) = log(3-3p)\\
+F_{X_2}^{-1}(p) = -\frac{log(3-3p)}{2}$$
+
+No caso de $F_{X_1}(x_1)$ vamos utiliizar o método da inversa através da funçãso `optimize` para achar a raiz da equação:
+
+$$(F_X(F_X^{-1}(p)) - p)^2 = 0$$
+$$(F_X(x) - p)^2 = 0$$
+
+E como, $0<x_1<1$, vamos utilizar o intervalo $[0,1]$ a fim de achar essa raiz.
+
+Além disso, como vamos gerar uma uniforme entre 0 e 1 a fim de gerar os valores para p, se o valor gerado for menor que $p_1$, ou seja, x estará entre 0 e 1, vamos utilizar $F_{X_1}(x_1)$, caso contrário, vamos utilizar $F_{X_2}(x_2)$:
+
+```{r}
+ # Definindo a função de distribuição acumulada 1
+FX1 <- function(x) (1-exp(-2*x)+2*x)/3
+ # Definindo a inversa da função de distribuição acumulada 1 pela função optimize
+inversa_FX1 <- function(p) optimize(function(x) (FX1(x) - p)**2, interval = c(0, 1), tol = 1E-6)$minimum
+
+ # Definindo a função de distribuição acumulada 1
+FX2 <- function(x) (3-exp(-2*x))/3
+ # Definindo a inversa da função de distribuição acumulada 2 encontrada analiticamente
+inversa_FX2 <- function(p) (-log(3-3*p))/2
+
+ # Definindo a probabilidade de x estar entre 0 e 1, ou seja, de FX1
+p1 <- (3-exp(-2))/3 
+```
+
+```{r}
+ # Definindo o gerador da mistura
+gera_mistura_dupla_inversa <- function(n, inversa_FX1, inversa_FX2, p1){
+  
+  # Parâmetros: n - tamanho da amostra
+  #             inversa_FX1 - função da inversa da FX1
+  #             inversa_FX2 - função da inversa da FX2
+  #             p1 - probabilidade de FX1
+  
+   # Gerando a uniforme
+  U <- runif(n)
+   # Aplicando a uniforme menor que p1 na inversa de FX1 e maior que p1 na inversa de FX2
+  ifelse(U<p1,
+         sapply(U, function(pj) inversa_FX1(pj)),
+         sapply(U, function(pj) inversa_FX2(pj)))
+  
+}
+```
+
+Vamos gerar uma amostra aleatória dessa mistura, plotar a a distribuição acumulada empírica e comparar com as funções de distribuição acumulada $F_{X_1}(x_1)$ e $F_{X_2}(x_2)$ em seus respectivos intervalos.
+
+```{r}
+ # Gerando amostra de tamanho 1000
+x_mistura <- gera_mistura_dupla_inversa(1E4, inversa_FX1, inversa_FX2, p1)
+```
+
+```{r}
+ # Plotando a distribuição acumulada empírica
+plot(ecdf(x_mistura), lwd = 3, main = "Distruição acumulada empírica")
+ # Plotando FX1
+curve(FX1, from = 0, to = 1, col = "blue", add = T, lwd = 2)
+ # Plotando FX2
+curve(FX2, from = 1, to = 5, col = "red", add = T, lwd = 2)
+ # Plotando a legenda
+legend("bottomright", legend = c("FX1", "FX2", "Amostra"),
+       lwd = c(3,2,2),col = c("blue","red","black"), bty = "n")
+```
+
+Podemos ver que a amostra apresentou um resultado muito próximo do esperado, onde as funções se sobrepõem a amostra.
+
+# Questão 5
+
+Primeiramente, vamos definir o algoritmo para gerar normais multivariadas. Para isso, vamos utilizar a função `gera_normal_box_muller` definida no número 1, a fim de gerar as amostras de normais padrão. 
+
+Após gerar essas amostras independentes da normal padrão, vamos utilizar a decomposição de matrizes na matriz $\Sigma$. 
+
+Para isso vamos utilizar a função `chol` e decompor a matriz $\Sigma$ em $L$ e $U$, onde $\Sigma = LU$. O retorno da função nos dará a matriz $U$, logo vamos utilizar a função $t$ para obter $U^t = L$, e utilizar uma matriz triangular inferior.
+
+Considerando $A=L$, para cada normal gerada vamos realizar a seguinte operação:
+
+$$(X_{1i}, X_{2i}, ..., X_{ni})^t = A(Z_{1i}, Z_{2i}, ...,Z_{ki})+\mu$$
+Onde $k$ é a quantidade de variáveis aleatórias.
+
+Para isso, vamos utilizar a função `sapply` para realizar essa tranformação em todos os vetores $(Z_{1i}, Z_{2i}, ...,Z_{ki})$ de $i=1$ até $i=n$.
+
+Dessa forma temos o resultado de $\underset{\sim}{X}$, um vetor coluna, logo ao aplicar o `sapply`, teremos um vetor $kxn$, por esta razão vamos transpor a fim de teremos uma matriz $nxk$, onde cada linha representa uma observação e cada coluna correspondente a uma variável aleatória.
+
+```{r}
+gera_normal_multi_matriz_A <- function(n, k, mu, sigma){
+  
+  # Parâmetros: n - tamanho das amostras
+  #             k - tamanho do vetor X multivariado
+  #             mu - vetor de mediias, deve ser de tamanho k
+  #             sigma - matriiz de covariancia, deve ser de dimensao kxk
+  
+  # Retorno: matriz nxk, onde cada linha representa uma observação e cada coluna correspondente a uma variável aleatória
+  
+   # Verificando as dimensões de mu e sigma
+  stopifnot(all(dim(sigma) == c(k,k)), dim(mu) == k)
+  
+   # Gerando k normais iid
+  Z <- replicate(k, unlist(gera_normal_box_muller(n/2)))
+   # Definindo a matriz inferior A
+  A <- t(chol(sigma))
+   # Transformando cada vetor de tamanho k em multivariado
+  X <- sapply(1:n, function(i){
+    A%*%Z[i,]+mu
+    })
+   # Retornando a matriz x
+  return(t(X))
+}
+```
+
+```{r}
+ # Definindo as medias
+mu <- c(1, 3)
+ # Definindo correlação
+ro <- -0.8
+ # Definindo matriz de covariãncia
+sigma <- matrix(c(2, ro*sqrt(2), ro*sqrt(2), 1), ncol = 2)
+```
+
+```{r}
+ # Gerando uma amostra bivariada
+x_bivariada <- gera_normal_multi_matriz_A(1E3, 2, mu, sigma)
+```
+
+A fim de gerar a elipse de confiança teórica usei como referência este [artigo](https://www.visiondummy.com/2014/04/draw-error-ellipse-representing-covariance-matrix/), onde encontrei que podemos definir $a$ e $b$ da elipse através dos autovalores de $\Sigma$, onde o máximo autovalor está relacionado com $a$ e o menor autovalor está relacionado com $b$. Para isso consideramos o resultado onde:
+
+$$(X-\mu)^t\Sigma^{-1}(X-\mu)\sim \chi_2^2$$
+
+Além disso, consideramos a matriz de rotação:
+
+$$R=
+\begin{bmatrix}
+    cos(\phi)       & sin(\phi)\\
+    -sin(\phi)       & sin(\phi) \\
+\end{bmatrix} 
+$$
+$$$$
+Onde $\phi$ é o angulo entre o eixo x e o auto vetor associado ao maior auto valor desde a origem.
+
+
+```{r} 
+ # Função para calcular os parâmetros da ellipse
+calcula_ellipse <- function(conf, mu, sigma){
+  
+  # Parâmetros: conf - nível de confiança da elipse
+  #             mu - vetor de médias
+  #             sigma - matriz de covariância
+  
+  # Retorno: Lista com os pontos da elipse, os parâmetros a e b da elipse e o angulo phi da matriz de rotação
+  
+   # Calculando autovetores e autovalores de sigma
+  auto <- eigen(sigma)
+  
+   # Calculando o máximo autovalor
+  max_auto_value <- which(auto$values == max(auto$values))
+   # Calculando o autovetor associado ao máximo autovalor
+  max_auto_vet <- auto$vectors[,max_auto_value]
+   # Calculando angulo entre o eixo x e máximo autovetor
+  phi <- atan2(max_auto_vet[2], max_auto_vet[1])
+   # Verificando se phi é negativo
+  if(phi < 0){
+    # mudando angulo para intervalo [0, 2pi]
+    phi <- phi + 2*pi
+  }
+  
+   # Definindo teta entre 0 até 2pi para gerar a ellipse
+  theta <- seq(0, 2*pi, length.out = 100)
+  
+   # Calculando a como a raiz da 
+  a <- sqrt(qchisq(conf, 2)*auto$values[max_auto_value])
+  b <- sqrt(qchisq(conf, 2)*auto$values[-max_auto_value])
+  
+   # Definindo os pontos
+  elipse_x <- a*cos(theta)
+  elipse_y <- b*sin(theta)
+  
+   # Definindo a matriz de rotação
+  R <- matrix(c(cos(phi), sin(phi), -sin(phi), cos(phi)), ncol = 2, byrow = T)
+   # Multiplicando os pontos pela matriz de rotação
+  r_ellipse <- matrix(c(elipse_x, elipse_y), ncol = 2) %*% R
+  
+   # Somando a media aos pontos
+  pontos <- r_ellipse + matrix(rep(mu, dim(r_ellipse)[1]), ncol = 2, byrow = T)
+  
+   # Retornando os pontos e os parâmetros da elipse
+  return(list(pontos = pontos, a = a, b = b, phi = phi))
+  }
+```
+
+
+Agora vamos definir uma função para calcular os pontos fora da elipse através de seus parâmetros:
+
+```{r}
+pontos_fora <- function(x1, x2, a, b, phi, mu){
+  
+  # Parâmetros: x1 - vetor da amostra de x1
+  #             x2 - vetor da amostra de x2
+  #             a - metade da maior distância entre os extremos
+  #             b -  metade da menor distância entre os extremos
+  #             phi - angulo da matrz de rotação
+  #             mu - vetor de médias
+  
+  # Retorno: Posição dos pontos foras 
+  
+  (((x1-mu[1])*cos(phi)+(x2-mu[2])*sin(phi))**2/a**2)+(((x1-mu[1])*sin(phi)-(x2-mu[2])*cos(phi))**2/b**2) > 1
+}
+```
+
+Por fim vamos definir uma função para plotar a elipse de confiança, juntos com os pontos:
+
+```{r}
+plota_ellipse <- function(x, conf, mu, sigma){
+  
+  # Parâmetros: x - vetor da amostra normal bivariada, com dimensão nxk
+  #             conf - nível de confiança da elipse
+  #             mu - vetor de médias
+  #             sigma - matriz de covariância
+  
+  # Retorno: gráfico
+  
+   # Calculando a elipse
+  ellipse <- calcula_ellipse(conf, mu, sigma)
+   # Salvando os pontos da elipse
+  pontos <- ellipse$pontos
+   # Calculando as posições dos pontos fora
+  fora <- pontos_fora(x[, 1], x[, 2], ellipse$a, ellipse$b, ellipse$phi, mu)
+  
+   # Plotando os pontos fora
+  plot(x[fora, 1], x[fora, 2], col = "red", bty = "n", 
+       main = sprintf("Elipse da região de %.02f%% de confiança", conf*100),
+       xlab = "x1", ylab = "x2")
+   # Plotando os pontos dentro
+  points(x[!fora, 1], x[!fora, 2])
+   # Plotando o centroide
+  points(mu[1], mu[2], pch = 20, col = "blue")
+   # Plotando a elipse
+  lines(pontos[, 1], pontos[, 2], col = "blue", lwd = 2)
+   # Plotando a legenda
+  legend("topright", legend = sprintf("%s pontos(%s%%) \nfora da elipse", sum(fora), round(sum(fora)*100/(length(x)/2), 2)), bty = "n")
+  
+}
+```
+
+```{r}
+ # Definindo a matriz dos gráficos
+layout(matrix(c(1,1,2,2,0,3,3,0), ncol=4, byrow = T))
+ # Plotando para cada nível de confiança
+invisible(
+  lapply(c(0.68,0.95,0.99),
+         function(conf)
+           plota_ellipse(x_bivariada, conf, mu, sigma)
+         )
+  )
+```
+
+Podemos ver que, como a quantidade de pontos fora da elipse de confiança foi próximo do esperado.
+
+Por fim, vamos analisar o desempenho da função para gerar normais multivariadas. Vamos comparar com o desempenho da função `mvrnorm` do pacote `MASS`:
+
+```{r}
+library(MASS)
+microbenchmark(mvrnorm(1E4, mu, sigma),
+               gera_normal_multi_matriz_A(1E4, 2, mu, sigma))
+```
+
+Podemos ver que a mediana do tempo para gerar uma normal foi quase 15 vezes em relação a função `mvrnorm`. 
+
+
+
+
